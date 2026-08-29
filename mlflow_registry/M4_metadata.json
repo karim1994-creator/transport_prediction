@@ -1,0 +1,29 @@
+{
+    "model_name": "M4",
+    "registry_name": "TransportPrediction_M4",
+    "artifact_file": "M4_baseline_historique.joblib",
+    "target": "pourc_validations",
+    "perimeter": "Surface",
+    "description": "Baseline historique pour prédiction du profil horaire des validations sur le réseau de surface.",
+    "artifact_keys": [
+        "baseline",
+        "cles",
+        "profil_keys",
+        "colonne_prediction",
+        "cible",
+        "perimetre",
+        "nom_modele",
+        "strategie",
+        "metadata"
+    ],
+    "cles": [
+        "code_ligne",
+        "id_groupofligne",
+        "cat_jour",
+        "heure_debut"
+    ],
+    "baseline_shape": [
+        544200,
+        5
+    ]
+}

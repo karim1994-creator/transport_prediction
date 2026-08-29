@@ -1,0 +1,34 @@
+[
+    {
+        "model": "M1",
+        "registry_name": "TransportPrediction_M1",
+        "run_id": "9485b28032684bf6a3d12f05432204b7",
+        "artifact": "C:\\Users\\karim\\OneDrive\\Documents\\Projet Fin etude\\transport_prediction_idf\\BLOC 5\\Transport_prediction\\models_a53\\M1_hgb_historique_causal.joblib",
+        "target": "nb_vald",
+        "perimeter": "Ferre"
+    },
+    {
+        "model": "M2",
+        "registry_name": "TransportPrediction_M2",
+        "run_id": "fd3d9ac8a5fe42bfb3ef2acd1b48c5d8",
+        "artifact": "C:\\Users\\karim\\OneDrive\\Documents\\Projet Fin etude\\transport_prediction_idf\\BLOC 5\\Transport_prediction\\models_a53\\M2_hgb_historique_causal.joblib",
+        "target": "nb_vald",
+        "perimeter": "Surface"
+    },
+    {
+        "model": "M3",
+        "registry_name": "TransportPrediction_M3",
+        "run_id": "5a02e358f5ec456c820108f35330419e",
+        "artifact": "C:\\Users\\karim\\OneDrive\\Documents\\Projet Fin etude\\transport_prediction_idf\\BLOC 5\\Transport_prediction\\models_a53\\M3_baseline_historique.joblib",
+        "target": "pourc_validations",
+        "perimeter": "Ferre"
+    },
+    {
+        "model": "M4",
+        "registry_name": "TransportPrediction_M4",
+        "run_id": "2a585de65cdc45389a36d0212c55309e",
+        "artifact": "C:\\Users\\karim\\OneDrive\\Documents\\Projet Fin etude\\transport_prediction_idf\\BLOC 5\\Transport_prediction\\models_a53\\M4_baseline_historique.joblib",
+        "target": "pourc_validations",
+        "perimeter": "Surface"
+    }
+]

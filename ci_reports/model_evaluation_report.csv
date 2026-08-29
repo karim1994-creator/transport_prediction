@@ -1,0 +1,5 @@
+﻿model,type,status,target,perimeter
+M1,ML,PASS,nb_vald,Ferre
+M2,ML,PASS,nb_vald,Surface
+M3,Baseline,PASS,pourc_validations,Ferre
+M4,Baseline,PASS,pourc_validations,Surface

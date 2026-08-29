@@ -1,0 +1,278 @@
+[
+    {
+        "model": "M1",
+        "type": "ML",
+        "status": "PASS",
+        "checks": [
+            {
+                "test": "structure",
+                "success": true,
+                "details": []
+            },
+            {
+                "test": "modele_present",
+                "success": true,
+                "details": "Pipeline"
+            },
+            {
+                "test": "features_non_vides",
+                "success": true,
+                "details": [
+                    "code_arret",
+                    "id_zdc",
+                    "mois",
+                    "trimestre",
+                    "semaine",
+                    "jour_semaine",
+                    "jour_du_mois",
+                    "jour_annee",
+                    "est_debut_mois",
+                    "est_fin_mois",
+                    "temperature_moyenne",
+                    "pluie_totale",
+                    "vitesse_vent_moyenne",
+                    "cat_jour",
+                    "code_meteo",
+                    "moyenne_historique_causale",
+                    "mediane_historique_causale",
+                    "moyenne_historique_cat_causale",
+                    "mediane_historique_cat_causale"
+                ]
+            },
+            {
+                "test": "inference",
+                "success": true,
+                "details": 3499.1210352746193
+            }
+        ],
+        "cible": "nb_vald",
+        "perimetre": "Ferre"
+    },
+    {
+        "model": "M2",
+        "type": "ML",
+        "status": "PASS",
+        "checks": [
+            {
+                "test": "structure",
+                "success": true,
+                "details": []
+            },
+            {
+                "test": "modele_present",
+                "success": true,
+                "details": "Pipeline"
+            },
+            {
+                "test": "features_non_vides",
+                "success": true,
+                "details": [
+                    "code_ligne",
+                    "id_groupoflines",
+                    "mois",
+                    "trimestre",
+                    "semaine",
+                    "jour_semaine",
+                    "jour_du_mois",
+                    "jour_annee",
+                    "est_debut_mois",
+                    "est_fin_mois",
+                    "temperature_moyenne",
+                    "pluie_totale",
+                    "vitesse_vent_moyenne",
+                    "cat_jour",
+                    "code_meteo",
+                    "moyenne_historique_causale",
+                    "mediane_historique_causale",
+                    "moyenne_historique_cat_causale",
+                    "mediane_historique_cat_causale"
+                ]
+            },
+            {
+                "test": "inference",
+                "success": true,
+                "details": 1632.0530417855184
+            }
+        ],
+        "cible": "nb_vald",
+        "perimetre": "Surface"
+    },
+    {
+        "model": "M3",
+        "type": "Baseline",
+        "status": "PASS",
+        "checks": [
+            {
+                "test": "structure",
+                "success": true,
+                "details": []
+            },
+            {
+                "test": "baseline_present",
+                "success": true,
+                "details": [
+                    102720,
+                    5
+                ]
+            },
+            {
+                "test": "cles_presentes",
+                "success": true,
+                "details": [
+                    "code_arret",
+                    "id_zdc",
+                    "cat_jour",
+                    "heure_debut"
+                ]
+            },
+            {
+                "test": "heure_debut",
+                "success": true,
+                "details": "heure_debut"
+            },
+            {
+                "test": "24_heures",
+                "success": true,
+                "details": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23
+                ]
+            },
+            {
+                "test": "colonne_prediction",
+                "success": true,
+                "details": "pourc_validations"
+            },
+            {
+                "test": "valeurs_valides",
+                "success": "True",
+                "details": {
+                    "min": 0.0,
+                    "max": 100.0
+                }
+            },
+            {
+                "test": "profils_100_pourcent",
+                "success": "True",
+                "details": {
+                    "nombre_profils": 4280,
+                    "min": 99.99999237060547,
+                    "max": 100.00000762939453
+                }
+            }
+        ],
+        "cible": "pourc_validations",
+        "perimetre": "Ferre"
+    },
+    {
+        "model": "M4",
+        "type": "Baseline",
+        "status": "PASS",
+        "checks": [
+            {
+                "test": "structure",
+                "success": true,
+                "details": []
+            },
+            {
+                "test": "baseline_present",
+                "success": true,
+                "details": [
+                    544200,
+                    5
+                ]
+            },
+            {
+                "test": "cles_presentes",
+                "success": true,
+                "details": [
+                    "code_ligne",
+                    "id_groupofligne",
+                    "cat_jour",
+                    "heure_debut"
+                ]
+            },
+            {
+                "test": "heure_debut",
+                "success": true,
+                "details": "heure_debut"
+            },
+            {
+                "test": "24_heures",
+                "success": true,
+                "details": [
+                    0,
+                    1,
+                    2,
+                    3,
+                    4,
+                    5,
+                    6,
+                    7,
+                    8,
+                    9,
+                    10,
+                    11,
+                    12,
+                    13,
+                    14,
+                    15,
+                    16,
+                    17,
+                    18,
+                    19,
+                    20,
+                    21,
+                    22,
+                    23
+                ]
+            },
+            {
+                "test": "colonne_prediction",
+                "success": true,
+                "details": "pourc_validations"
+            },
+            {
+                "test": "valeurs_valides",
+                "success": "True",
+                "details": {
+                    "min": 0.0,
+                    "max": 100.0
+                }
+            },
+            {
+                "test": "profils_100_pourcent",
+                "success": "True",
+                "details": {
+                    "nombre_profils": 22675,
+                    "min": 99.99998474121094,
+                    "max": 100.00001525878906
+                }
+            }
+        ],
+        "cible": "pourc_validations",
+        "perimetre": "Surface"
+    }
+]

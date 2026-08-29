@@ -1,0 +1,29 @@
+{
+    "model_name": "M3",
+    "registry_name": "TransportPrediction_M3",
+    "artifact_file": "M3_baseline_historique.joblib",
+    "target": "pourc_validations",
+    "perimeter": "Ferre",
+    "description": "Baseline historique pour prédiction du profil horaire des validations sur le réseau ferré.",
+    "artifact_keys": [
+        "baseline",
+        "cles",
+        "profil_keys",
+        "colonne_prediction",
+        "cible",
+        "perimetre",
+        "nom_modele",
+        "strategie",
+        "metadata"
+    ],
+    "cles": [
+        "code_arret",
+        "id_zdc",
+        "cat_jour",
+        "heure_debut"
+    ],
+    "baseline_shape": [
+        102720,
+        5
+    ]
+}

@@ -1,0 +1,61 @@
+{
+    "model_name": "M1",
+    "registry_name": "TransportPrediction_M1",
+    "artifact_file": "M1_hgb_historique_causal.joblib",
+    "target": "nb_vald",
+    "perimeter": "Ferre",
+    "description": "Modèle HistGradientBoosting pour prédiction du nombre de validations sur le réseau ferré.",
+    "artifact_keys": [
+        "modele",
+        "features",
+        "features_categorielles",
+        "features_numeriques",
+        "cible",
+        "perimetre",
+        "nom_modele"
+    ],
+    "features": [
+        "code_arret",
+        "id_zdc",
+        "mois",
+        "trimestre",
+        "semaine",
+        "jour_semaine",
+        "jour_du_mois",
+        "jour_annee",
+        "est_debut_mois",
+        "est_fin_mois",
+        "temperature_moyenne",
+        "pluie_totale",
+        "vitesse_vent_moyenne",
+        "cat_jour",
+        "code_meteo",
+        "moyenne_historique_causale",
+        "mediane_historique_causale",
+        "moyenne_historique_cat_causale",
+        "mediane_historique_cat_causale"
+    ],
+    "features_categorielles": [
+        "code_arret",
+        "id_zdc",
+        "cat_jour",
+        "code_meteo"
+    ],
+    "features_numeriques": [
+        "mois",
+        "trimestre",
+        "semaine",
+        "jour_semaine",
+        "jour_du_mois",
+        "jour_annee",
+        "est_debut_mois",
+        "est_fin_mois",
+        "temperature_moyenne",
+        "pluie_totale",
+        "vitesse_vent_moyenne",
+        "moyenne_historique_causale",
+        "mediane_historique_causale",
+        "moyenne_historique_cat_causale",
+        "mediane_historique_cat_causale"
+    ]
+}

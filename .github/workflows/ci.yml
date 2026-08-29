@@ -1,0 +1,132 @@
+name: CI Transport Prediction
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+  pull_request:
+    branches:
+      - main
+      - master
+
+
+jobs:
+
+  quality-check:
+
+    name: Tests et validation des modèles
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # ====================================================
+      # 1. RECUPERATION DU PROJET
+      # ====================================================
+
+      - name: Checkout du dépôt
+        uses: actions/checkout@v4
+
+
+      # ====================================================
+      # 2. INSTALLATION PYTHON
+      # ====================================================
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+
+      # ====================================================
+      # 3. CACHE PIP
+      # ====================================================
+
+      - name: Configurer le cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+
+      # ====================================================
+      # 4. INSTALLATION DES DEPENDANCES
+      # ====================================================
+
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-ci.txt
+
+
+      # ====================================================
+      # 5. CONFIGURATION PYTHONPATH
+      # ====================================================
+
+      - name: Configurer PYTHONPATH
+        run: |
+          echo "PYTHONPATH=$GITHUB_WORKSPACE/application" >> $GITHUB_ENV
+
+
+      # ====================================================
+      # 6. VERIFICATION DES ARTEFACTS
+      # ====================================================
+
+      - name: Vérifier les modèles M1-M4
+        shell: bash
+        run: |
+
+          test -f models_a53/M1_hgb_historique_causal.joblib
+          test -f models_a53/M2_hgb_historique_causal.joblib
+          test -f models_a53/M3_baseline_historique.joblib
+          test -f models_a53/M4_baseline_historique.joblib
+
+          echo "Les 4 artefacts M1-M4 sont présents."
+
+
+      # ====================================================
+      # 7. TESTS AUTOMATIQUES
+      # ====================================================
+
+      - name: Exécuter les tests pytest
+        run: |
+          pytest -v tests
+
+
+      # ====================================================
+      # 8. EVALUATION AUTOMATIQUE DES MODELES
+      # ====================================================
+
+      - name: Évaluer M1-M4
+        run: |
+          python evaluate_models_ci.py
+
+
+      # ====================================================
+      # 9. CONSERVER LES RAPPORTS
+      # ====================================================
+
+      - name: Publier les rapports CI
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-evaluation-reports
+          path: ci_reports/
+
+
+      # ====================================================
+      # 10. MESSAGE FINAL
+      # ====================================================
+
+      - name: Validation CI terminée
+        run: |
+          echo "=============================================="
+          echo "CI VALIDEE"
+          echo "Tests techniques : OK"
+          echo "Modèles M1-M4 : OK"
+          echo "Evaluation modèles : OK"
+          echo "=============================================="
