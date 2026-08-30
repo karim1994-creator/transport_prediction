@@ -1,0 +1,20 @@
+groups:
+
+  - name: transport-prediction-ml
+
+    rules:
+
+      - alert: MLModelDriftDetected
+
+        expr: ml_drift_psi{model=~"M3|M4"} >= 0.20
+
+        for: 2m
+
+        labels:
+          severity: warning
+
+        annotations:
+
+          summary: "Dérive détectée sur le modèle {{ $labels.model }}"
+
+          description: "Le PSI du modèle {{ $labels.model }} dépasse le seuil de 0.20."

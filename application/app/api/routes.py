@@ -1,41 +1,216 @@
 from fastapi import APIRouter, HTTPException, Request
-from app.schemas.prediction import MLPredictionRequest, ProfilePredictionRequest
+
+from prometheus_client import Counter
+
+from app.schemas.prediction import (
+    MLPredictionRequest,
+    ProfilePredictionRequest,
+)
+
 
 router = APIRouter()
 
+
+# ============================================================
+# METRIQUES ML
+# ============================================================
+
+PREDICTIONS_TOTAL = Counter(
+    "ml_predictions_total",
+    "Nombre total de predictions par modele",
+    ["model"],
+)
+
+
+PREDICTION_ERRORS_TOTAL = Counter(
+    "ml_prediction_errors_total",
+    "Nombre total d'erreurs de prediction par modele",
+    ["model"],
+)
+
+
+# ============================================================
+# HEALTH
+# ============================================================
+
 @router.get("/health")
 def health(request: Request):
-    loaded = len(request.app.state.model_loader.models)
-    return {"status": "ok" if loaded == 4 else "degraded", "models_loaded": loaded}
+
+    loaded = len(
+        request.app.state.model_loader.models
+    )
+
+    return {
+        "status": "ok" if loaded == 4 else "degraded",
+        "models_loaded": loaded,
+    }
+
+
+# ============================================================
+# MODELS
+# ============================================================
 
 @router.get("/models")
 def models(request: Request):
+
     return request.app.state.model_loader.status()
 
+
+# ============================================================
+# M1
+# ============================================================
+
 @router.post("/predict/m1")
-def predict_m1(body: MLPredictionRequest, request: Request):
+def predict_m1(
+    body: MLPredictionRequest,
+    request: Request,
+):
+
     try:
-        return request.app.state.prediction_engine.predict_ml("M1", body.rows)
+
+        result = request.app.state.prediction_engine.predict_ml(
+            "M1",
+            body.rows,
+        )
+
+        PREDICTIONS_TOTAL.labels(
+            model="M1"
+        ).inc()
+
+        return result
+
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+
+        PREDICTION_ERRORS_TOTAL.labels(
+            model="M1"
+        ).inc()
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
+
+
+# ============================================================
+# M2
+# ============================================================
 
 @router.post("/predict/m2")
-def predict_m2(body: MLPredictionRequest, request: Request):
+def predict_m2(
+    body: MLPredictionRequest,
+    request: Request,
+):
+
     try:
-        return request.app.state.prediction_engine.predict_ml("M2", body.rows)
+
+        result = request.app.state.prediction_engine.predict_ml(
+            "M2",
+            body.rows,
+        )
+
+        PREDICTIONS_TOTAL.labels(
+            model="M2"
+        ).inc()
+
+        return result
+
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+
+        PREDICTION_ERRORS_TOTAL.labels(
+            model="M2"
+        ).inc()
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
+
+
+# ============================================================
+# M3
+# ============================================================
 
 @router.post("/predict/m3")
-def predict_m3(body: ProfilePredictionRequest, request: Request):
+def predict_m3(
+    body: ProfilePredictionRequest,
+    request: Request,
+):
+
     try:
-        return request.app.state.prediction_engine.predict_full_profile("M3", body.profile)
+
+        result = request.app.state.prediction_engine.predict_full_profile(
+            "M3",
+            body.profile,
+        )
+
+        request.app.state.drift_monitor.update(
+            "M3",
+            result["profile"],
+        )
+
+        PREDICTIONS_TOTAL.labels(
+            model="M3"
+        ).inc()
+
+        return result
+
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+
+        PREDICTION_ERRORS_TOTAL.labels(
+            model="M3"
+        ).inc()
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
+
+
+# ============================================================
+# M4
+# ============================================================
 
 @router.post("/predict/m4")
-def predict_m4(body: ProfilePredictionRequest, request: Request):
+def predict_m4(
+    body: ProfilePredictionRequest,
+    request: Request,
+):
+
     try:
-        return request.app.state.prediction_engine.predict_full_profile("M4", body.profile)
+
+        result = request.app.state.prediction_engine.predict_full_profile(
+            "M4",
+            body.profile,
+        )
+
+        request.app.state.drift_monitor.update(
+            "M4",
+            result["profile"],
+        )
+
+        PREDICTIONS_TOTAL.labels(
+            model="M4"
+        ).inc()
+
+        return result
+
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
+
+        PREDICTION_ERRORS_TOTAL.labels(
+            model="M4"
+        ).inc()
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
+
+
+# ============================================================
+# MONITORING DERIVE
+# ============================================================
+
+@router.get("/monitoring/drift")
+def drift_status(request: Request):
+
+    return request.app.state.drift_monitor.status()
