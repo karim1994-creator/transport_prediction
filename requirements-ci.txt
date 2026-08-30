@@ -9,3 +9,4 @@ joblib
 sqlalchemy
 psycopg2-binary
 mlflow
+prometheus-fastapi-instrumentator
