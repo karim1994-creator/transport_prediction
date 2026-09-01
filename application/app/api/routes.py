@@ -128,6 +128,7 @@ def predict_m2(
 
 # ============================================================
 # M3
+# PROFIL HORAIRE - FERRE
 # ============================================================
 
 @router.post("/predict/m3")
@@ -138,15 +139,40 @@ def predict_m3(
 
     try:
 
+        # ====================================================
+        # PREDICTION
+        # ====================================================
+
         result = request.app.state.prediction_engine.predict_full_profile(
             "M3",
             body.profile,
         )
 
+        # ====================================================
+        # MONITORING DE DERIVE - PSI
+        # ====================================================
+
         request.app.state.drift_monitor.update(
             "M3",
             result["profile"],
         )
+
+        # ====================================================
+        # HISTORISATION DE LA PREDICTION
+        # ====================================================
+
+        request.app.state.prediction_history.save_prediction(
+            model_name="M3",
+            model_version="production",
+            perimeter="Ferre",
+            request_profile=body.profile,
+            prediction=result["profile"],
+            prediction_total=result["total_percent"],
+        )
+
+        # ====================================================
+        # METRIQUE PROMETHEUS
+        # ====================================================
 
         PREDICTIONS_TOTAL.labels(
             model="M3"
@@ -168,6 +194,7 @@ def predict_m3(
 
 # ============================================================
 # M4
+# PROFIL HORAIRE - SURFACE
 # ============================================================
 
 @router.post("/predict/m4")
@@ -178,15 +205,40 @@ def predict_m4(
 
     try:
 
+        # ====================================================
+        # PREDICTION
+        # ====================================================
+
         result = request.app.state.prediction_engine.predict_full_profile(
             "M4",
             body.profile,
         )
 
+        # ====================================================
+        # MONITORING DE DERIVE - PSI
+        # ====================================================
+
         request.app.state.drift_monitor.update(
             "M4",
             result["profile"],
         )
+
+        # ====================================================
+        # HISTORISATION DE LA PREDICTION
+        # ====================================================
+
+        request.app.state.prediction_history.save_prediction(
+            model_name="M4",
+            model_version="production",
+            perimeter="Surface",
+            request_profile=body.profile,
+            prediction=result["profile"],
+            prediction_total=result["total_percent"],
+        )
+
+        # ====================================================
+        # METRIQUE PROMETHEUS
+        # ====================================================
 
         PREDICTIONS_TOTAL.labels(
             model="M4"
@@ -207,7 +259,7 @@ def predict_m4(
 
 
 # ============================================================
-# MONITORING DERIVE
+# MONITORING DERIVE - PSI
 # ============================================================
 
 @router.get("/monitoring/drift")

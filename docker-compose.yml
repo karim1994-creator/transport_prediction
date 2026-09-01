@@ -1,5 +1,8 @@
 services:
 
+  # ==========================================================
+  # API FASTAPI
+  # ==========================================================
   api:
     build:
       context: .
@@ -12,9 +15,17 @@ services:
     ports:
       - "8000:8000"
 
+    env_file:
+      - ./application/config/.env
+
+    environment:
+      DB_HOST: host.docker.internal
+
     restart: unless-stopped
 
-
+  # ==========================================================
+  # PROMETHEUS
+  # ==========================================================
   prometheus:
     image: prom/prometheus:latest
 
@@ -32,6 +43,9 @@ services:
     restart: unless-stopped
 
 
+  # ==========================================================
+  # GRAFANA
+  # ==========================================================
   grafana:
     image: grafana/grafana:latest
 
@@ -48,6 +62,10 @@ services:
 
     restart: unless-stopped
 
+
+# ============================================================
+# VOLUMES
+# ============================================================
 
 volumes:
   grafana_data:
