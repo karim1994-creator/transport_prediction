@@ -475,41 +475,43 @@ jobs:
       # ======================================================
 
       - name: Tester /models
-
         run: |
-
           echo "=============================================="
-
           echo "TEST /models"
-
           echo "=============================================="
 
-
-          response=$(
-            curl \
-              --silent \
-              --fail \
-              http://127.0.0.1:8000/models
-          )
-
-
-          echo "$response"
-
-
-          echo "$response" | grep '"M1"'
-
-          echo "$response" | grep '"M2"'
-
-          echo "$response" | grep '"M3"'
-
-          echo "$response" | grep '"M4"'
-
-          echo "$response" | grep '"loaded":true"'
-
+          curl \
+            --silent \
+            --show-error \
+            --fail \
+            http://127.0.0.1:8000/models \
+            -o models_response.json
 
           echo ""
+          cat models_response.json
+          echo ""
 
-          echo "/models : OK"
+          python - <<'PY'
+          import json
+
+          with open("models_response.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          expected_models = ["M1", "M2", "M3", "M4"]
+
+          for model in expected_models:
+              assert model in data, f"{model} absent de /models"
+              assert data[model]["exists"] is True, f"{model} existe=false"
+              assert data[model]["loaded"] is True, f"{model} loaded=false"
+
+          print("")
+          print("M1 : OK")
+          print("M2 : OK")
+          print("M3 : OK")
+          print("M4 : OK")
+          print("")
+          print("/models : OK")
+          PY
 
 
       # ======================================================
