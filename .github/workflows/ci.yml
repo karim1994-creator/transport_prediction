@@ -51,6 +51,21 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    # --------------------------------------------------------
+    # VARIABLES DE TEST
+    #
+    # Ces valeurs sont uniquement utilisées par GitHub Actions.
+    # Elles ne correspondent PAS à la vraie base PostgreSQL.
+    # --------------------------------------------------------
+
+    env:
+
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: test_db
+      DB_USER: test_user
+      DB_PASSWORD: test_password
+
     steps:
 
       # ------------------------------------------------------
@@ -58,6 +73,7 @@ jobs:
       # ------------------------------------------------------
 
       - name: Checkout du dépôt
+
         uses: actions/checkout@v4
 
 
@@ -66,6 +82,7 @@ jobs:
       # ------------------------------------------------------
 
       - name: Installer Python
+
         uses: actions/setup-python@v5
 
         with:
@@ -78,14 +95,14 @@ jobs:
       # ------------------------------------------------------
 
       - name: Configurer le cache pip
+
         uses: actions/cache@v4
 
         with:
 
           path: ~/.cache/pip
 
-          key:
-            ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
 
           restore-keys: |
 
@@ -97,6 +114,7 @@ jobs:
       # ------------------------------------------------------
 
       - name: Installer les dépendances
+
         run: |
 
           python -m pip install --upgrade pip
@@ -109,6 +127,7 @@ jobs:
       # ------------------------------------------------------
 
       - name: Configurer PYTHONPATH
+
         run: |
 
           echo "PYTHONPATH=$GITHUB_WORKSPACE/application" >> $GITHUB_ENV
@@ -119,6 +138,7 @@ jobs:
       # ------------------------------------------------------
 
       - name: Vérifier les modèles M1-M4
+
         shell: bash
 
         run: |
@@ -134,6 +154,7 @@ jobs:
           test -f models_a53/M4_baseline_historique.joblib
 
           echo ""
+
           echo "Les 4 modèles sont présents."
 
 
@@ -189,6 +210,18 @@ jobs:
     needs:
 
       - quality-check
+
+    # --------------------------------------------------------
+    # VARIABLES DE TEST POUR LE CONTENEUR
+    # --------------------------------------------------------
+
+    env:
+
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_NAME: test_db
+      DB_USER: test_user
+      DB_PASSWORD: test_password
 
     steps:
 
@@ -252,6 +285,11 @@ jobs:
             -d \
             --name transport-prediction-api \
             -p 8000:8000 \
+            -e DB_HOST="$DB_HOST" \
+            -e DB_PORT="$DB_PORT" \
+            -e DB_NAME="$DB_NAME" \
+            -e DB_USER="$DB_USER" \
+            -e DB_PASSWORD="$DB_PASSWORD" \
             transport-prediction-api:ci
 
 
@@ -277,6 +315,7 @@ jobs:
             then
 
               echo ""
+
               echo "API démarrée."
 
               exit 0
@@ -343,7 +382,7 @@ jobs:
 
           echo "$response" | grep '"M4"'
 
-          echo "$response" | grep '"loaded":true'
+          echo "$response" | grep '"loaded":true"
 
 
       # ------------------------------------------------------
