@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Dépendances Streamlit
+COPY application/ui/requirements_ui.txt .
+
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r requirements_ui.txt
+
+# Copie de l'interface
+COPY application/ui ./application/ui
+
+ENV PYTHONPATH=/app/application
+
+EXPOSE 8501
+
+CMD ["streamlit", "run", "application/ui/app.py", "--server.address=0.0.0.0", "--server.port=8501"]

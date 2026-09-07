@@ -8,6 +8,13 @@ from app.main import app
 
 
 # ============================================================
+# DATE UTILISEE POUR LES TESTS
+# ============================================================
+
+TEST_DAY = "2026-09-07"
+
+
+# ============================================================
 # M3
 # ============================================================
 
@@ -18,6 +25,7 @@ def test_predict_m3():
             "code_arret": "810_801_594",
             "id_zdc": "71590",
             "cat_jour": "JOHV",
+            "jour": TEST_DAY,
         }
     }
 
@@ -64,6 +72,7 @@ def test_predict_m4():
             "code_ligne": "534_534_524",
             "id_groupofligne": "A00553",
             "cat_jour": "JOHV",
+            "jour": TEST_DAY,
         }
     }
 
@@ -110,6 +119,7 @@ def test_m3_profile_structure():
             "code_arret": "810_801_594",
             "id_zdc": "71590",
             "cat_jour": "JOHV",
+            "jour": TEST_DAY,
         }
     }
 
@@ -155,6 +165,7 @@ def test_m4_profile_structure():
             "code_ligne": "534_534_524",
             "id_groupofligne": "A00553",
             "cat_jour": "JOHV",
+            "jour": TEST_DAY,
         }
     }
 

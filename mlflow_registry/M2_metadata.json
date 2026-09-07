@@ -12,7 +12,14 @@
         "features_numeriques",
         "cible",
         "perimetre",
-        "nom_modele"
+        "nom_modele",
+        "version_optimisation",
+        "optimisation",
+        "strategie",
+        "variables_historique",
+        "hyperparametres",
+        "performances_validation",
+        "performances_test"
     ],
     "features": [
         "code_ligne",
@@ -33,7 +40,12 @@
         "moyenne_historique_causale",
         "mediane_historique_causale",
         "moyenne_historique_cat_causale",
-        "mediane_historique_cat_causale"
+        "mediane_historique_cat_causale",
+        "lag_1",
+        "lag_7",
+        "lag_14",
+        "moyenne_mobile_7",
+        "moyenne_mobile_28"
     ],
     "features_categorielles": [
         "code_ligne",
@@ -56,6 +68,11 @@
         "moyenne_historique_causale",
         "mediane_historique_causale",
         "moyenne_historique_cat_causale",
-        "mediane_historique_cat_causale"
+        "mediane_historique_cat_causale",
+        "lag_1",
+        "lag_7",
+        "lag_14",
+        "moyenne_mobile_7",
+        "moyenne_mobile_28"
     ]
 }

@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 # TRAINING FINAL DES 4 MODELES
 #
 # M1 : Ferré   -> nb_vald
@@ -111,6 +111,16 @@ sys.path.insert(
 
 from app.config import DATABASE_URL
 
+from app.services.ml_features import (
+    FEATURES_M1,
+    FEATURES_M2,
+    CATEGORICAL_FEATURES_M1,
+    CATEGORICAL_FEATURES_M2,
+    HISTORICAL_FEATURES,
+    prepare_m1_features,
+    prepare_m2_features,
+)
+
 
 # ============================================================
 # CONFIGURATION GENERALE
@@ -161,6 +171,8 @@ MODEL_FILES = {
     "M4":
         "M4_baseline_historique.joblib",
 }
+
+
 
 
 # ============================================================
@@ -407,7 +419,8 @@ def evaluate_model(
 
 def create_model_pipeline(
     numeric_features,
-    categorical_features
+    categorical_features,
+    **params
 ):
 
     preprocessor = ColumnTransformer(
@@ -416,20 +429,16 @@ def create_model_pipeline(
 
             (
                 "num",
-
                 "passthrough",
-
                 numeric_features,
             ),
 
             (
                 "cat",
-
                 OrdinalEncoder(
                     handle_unknown="use_encoded_value",
                     unknown_value=-1,
                 ),
-
                 categorical_features,
             ),
         ]
@@ -439,20 +448,30 @@ def create_model_pipeline(
 
         loss="squared_error",
 
-        learning_rate=0.08,
+        learning_rate=params[
+            "learning_rate"
+        ],
 
-        max_iter=300,
+        max_iter=params[
+            "max_iter"
+        ],
 
-        max_leaf_nodes=31,
+        max_leaf_nodes=params[
+            "max_leaf_nodes"
+        ],
 
-        min_samples_leaf=30,
+        min_samples_leaf=params[
+            "min_samples_leaf"
+        ],
 
-        l2_regularization=1.0,
+        l2_regularization=params[
+            "l2_regularization"
+        ],
 
         random_state=RANDOM_STATE,
     )
 
-    pipeline = Pipeline(
+    return Pipeline(
 
         steps=[
 
@@ -468,7 +487,38 @@ def create_model_pipeline(
         ]
     )
 
-    return pipeline
+
+
+# ============================================================
+# CONFIGURATIONS OPTIMISEES M1 / M2 - V4
+# ============================================================
+
+M1_PARAMS = {
+
+    "learning_rate": 0.05,
+
+    "max_iter": 500,
+
+    "max_leaf_nodes": 31,
+
+    "min_samples_leaf": 30,
+
+    "l2_regularization": 1.0,
+}
+
+
+M2_PARAMS = {
+
+    "learning_rate": 0.05,
+
+    "max_iter": 500,
+
+    "max_leaf_nodes": 31,
+
+    "min_samples_leaf": 30,
+
+    "l2_regularization": 1.0,
+}
 
 
 # ============================================================
@@ -541,126 +591,27 @@ def train_m1():
     )
 
     # --------------------------------------------------------
-    # HISTORIQUE CAUSAL
+    # FEATURES M1 V4
     # --------------------------------------------------------
 
-    df = df.sort_values(
-        [
-            "code_arret",
-            "id_zdc",
-            "jour",
-        ]
-    ).copy()
-
-    df[
-        "moyenne_historique_causale"
-    ] = (
-
+    df = prepare_m1_features(
         df
-
-        .groupby(
-            [
-                "code_arret",
-                "id_zdc",
-            ]
-        )["nb_vald"]
-
-        .transform(
-            lambda x:
-            x
-            .shift(1)
-            .expanding()
-            .mean()
-        )
     )
 
-    df[
-        "mediane_historique_causale"
-    ] = (
-
-        df
-
-        .groupby(
-            [
-                "code_arret",
-                "id_zdc",
-            ]
-        )["nb_vald"]
-
-        .transform(
-            lambda x:
-            x
-            .shift(1)
-            .expanding()
-            .median()
-        )
+    print(
+        "Shape M1 :",
+        df.shape
     )
 
-    df[
-        "moyenne_historique_cat_causale"
-    ] = (
-
-        df
-
-        .groupby(
-            [
-                "code_arret",
-                "id_zdc",
-                "cat_jour",
-            ]
-        )["nb_vald"]
-
-        .transform(
-            lambda x:
-            x
-            .shift(1)
-            .expanding()
-            .mean()
-        )
+    print(
+        "Nombre features M1 :",
+        len(FEATURES_M1)
     )
 
-    df[
-        "mediane_historique_cat_causale"
-    ] = (
-
-        df
-
-        .groupby(
-            [
-                "code_arret",
-                "id_zdc",
-                "cat_jour",
-            ]
-        )["nb_vald"]
-
-        .transform(
-            lambda x:
-            x
-            .shift(1)
-            .expanding()
-            .median()
-        )
+    print(
+        "Features historiques M1 :",
+        HISTORICAL_FEATURES
     )
-
-    historical_cols = [
-
-        "moyenne_historique_causale",
-
-        "mediane_historique_causale",
-
-        "moyenne_historique_cat_causale",
-
-        "mediane_historique_cat_causale",
-    ]
-
-    df[historical_cols] = (
-        df[historical_cols]
-        .fillna(0)
-    )
-
-    # --------------------------------------------------------
-    # SPLIT
-    # --------------------------------------------------------
 
     train, val, test = temporal_split(
         df
@@ -670,57 +621,13 @@ def train_m1():
     # FEATURES
     # --------------------------------------------------------
 
-    features = [
+    features = list(
+        FEATURES_M1
+    )
 
-        "code_arret",
-
-        "id_zdc",
-
-        "mois",
-
-        "trimestre",
-
-        "semaine",
-
-        "jour_semaine",
-
-        "jour_du_mois",
-
-        "jour_annee",
-
-        "est_debut_mois",
-
-        "est_fin_mois",
-
-        "temperature_moyenne",
-
-        "pluie_totale",
-
-        "vitesse_vent_moyenne",
-
-        "cat_jour",
-
-        "code_meteo",
-
-        "moyenne_historique_causale",
-
-        "mediane_historique_causale",
-
-        "moyenne_historique_cat_causale",
-
-        "mediane_historique_cat_causale",
-    ]
-
-    categorical_features = [
-
-        "code_arret",
-
-        "id_zdc",
-
-        "cat_jour",
-
-        "code_meteo",
-    ]
+    categorical_features = list(
+        CATEGORICAL_FEATURES_M1
+    )
 
     numeric_features = [
 
@@ -731,13 +638,15 @@ def train_m1():
         if col not in categorical_features
     ]
 
+
     # --------------------------------------------------------
     # PIPELINE
     # --------------------------------------------------------
 
     model = create_model_pipeline(
         numeric_features,
-        categorical_features
+        categorical_features,
+        **M1_PARAMS
     )
 
     X_train = train[features]
@@ -765,18 +674,18 @@ def train_m1():
     # EVALUATION
     # --------------------------------------------------------
 
-    evaluate_model(
+    val_metrics = evaluate_model(
         model,
         X_val,
         y_val,
-        "M1 - VALIDATION"
+        "M1 V4 - VALIDATION"
     )
 
-    evaluate_model(
+    test_metrics = evaluate_model(
         model,
         X_test,
         y_test,
-        "M1 - TEST"
+        "M1 V4 - TEST"
     )
 
     # --------------------------------------------------------
@@ -805,6 +714,27 @@ def train_m1():
 
         "nom_modele":
             "M1_hgb_historique_causal",
+
+        "version_optimisation":
+            "V4",
+
+        "optimisation":
+            True,
+
+        "strategie":
+            "historique_causal_recent",
+
+        "variables_historique":
+            list(HISTORICAL_FEATURES),
+
+        "hyperparametres":
+            M1_PARAMS,
+
+        "performances_validation":
+            val_metrics,
+
+        "performances_test":
+            test_metrics,
     }
 
     model_path = (
@@ -902,126 +832,27 @@ def train_m2():
     )
 
     # --------------------------------------------------------
-    # HISTORIQUE CAUSAL
+    # FEATURES M2 V4
     # --------------------------------------------------------
 
-    df = df.sort_values(
-        [
-            "code_ligne",
-            "id_groupoflines",
-            "jour",
-        ]
-    ).copy()
-
-    df[
-        "moyenne_historique_causale"
-    ] = (
-
+    df = prepare_m2_features(
         df
-
-        .groupby(
-            [
-                "code_ligne",
-                "id_groupoflines",
-            ]
-        )["nb_vald"]
-
-        .transform(
-            lambda x:
-            x
-            .shift(1)
-            .expanding()
-            .mean()
-        )
     )
 
-    df[
-        "mediane_historique_causale"
-    ] = (
-
-        df
-
-        .groupby(
-            [
-                "code_ligne",
-                "id_groupoflines",
-            ]
-        )["nb_vald"]
-
-        .transform(
-            lambda x:
-            x
-            .shift(1)
-            .expanding()
-            .median()
-        )
+    print(
+        "Shape M2 :",
+        df.shape
     )
 
-    df[
-        "moyenne_historique_cat_causale"
-    ] = (
-
-        df
-
-        .groupby(
-            [
-                "code_ligne",
-                "id_groupoflines",
-                "cat_jour",
-            ]
-        )["nb_vald"]
-
-        .transform(
-            lambda x:
-            x
-            .shift(1)
-            .expanding()
-            .mean()
-        )
+    print(
+        "Nombre features M2 :",
+        len(FEATURES_M2)
     )
 
-    df[
-        "mediane_historique_cat_causale"
-    ] = (
-
-        df
-
-        .groupby(
-            [
-                "code_ligne",
-                "id_groupoflines",
-                "cat_jour",
-            ]
-        )["nb_vald"]
-
-        .transform(
-            lambda x:
-            x
-            .shift(1)
-            .expanding()
-            .median()
-        )
+    print(
+        "Features historiques M2 :",
+        HISTORICAL_FEATURES
     )
-
-    historical_cols = [
-
-        "moyenne_historique_causale",
-
-        "mediane_historique_causale",
-
-        "moyenne_historique_cat_causale",
-
-        "mediane_historique_cat_causale",
-    ]
-
-    df[historical_cols] = (
-        df[historical_cols]
-        .fillna(0)
-    )
-
-    # --------------------------------------------------------
-    # SPLIT
-    # --------------------------------------------------------
 
     train, val, test = temporal_split(
         df
@@ -1031,57 +862,13 @@ def train_m2():
     # FEATURES
     # --------------------------------------------------------
 
-    features = [
+    features = list(
+        FEATURES_M2
+    )
 
-        "code_ligne",
-
-        "id_groupoflines",
-
-        "mois",
-
-        "trimestre",
-
-        "semaine",
-
-        "jour_semaine",
-
-        "jour_du_mois",
-
-        "jour_annee",
-
-        "est_debut_mois",
-
-        "est_fin_mois",
-
-        "temperature_moyenne",
-
-        "pluie_totale",
-
-        "vitesse_vent_moyenne",
-
-        "cat_jour",
-
-        "code_meteo",
-
-        "moyenne_historique_causale",
-
-        "mediane_historique_causale",
-
-        "moyenne_historique_cat_causale",
-
-        "mediane_historique_cat_causale",
-    ]
-
-    categorical_features = [
-
-        "code_ligne",
-
-        "id_groupoflines",
-
-        "cat_jour",
-
-        "code_meteo",
-    ]
+    categorical_features = list(
+        CATEGORICAL_FEATURES_M2
+    )
 
     numeric_features = [
 
@@ -1092,13 +879,15 @@ def train_m2():
         if col not in categorical_features
     ]
 
+
     # --------------------------------------------------------
     # PIPELINE
     # --------------------------------------------------------
 
     model = create_model_pipeline(
         numeric_features,
-        categorical_features
+        categorical_features,
+        **M2_PARAMS
     )
 
     X_train = train[features]
@@ -1126,18 +915,18 @@ def train_m2():
     # EVALUATION
     # --------------------------------------------------------
 
-    evaluate_model(
+    val_metrics = evaluate_model(
         model,
         X_val,
         y_val,
-        "M2 - VALIDATION"
+        "M2 V4 - VALIDATION"
     )
 
-    evaluate_model(
+    test_metrics = evaluate_model(
         model,
         X_test,
         y_test,
-        "M2 - TEST"
+        "M2 V4 - TEST"
     )
 
     # --------------------------------------------------------
@@ -1166,6 +955,27 @@ def train_m2():
 
         "nom_modele":
             "M2_hgb_historique_causal",
+
+        "version_optimisation":
+            "V4",
+
+        "optimisation":
+            True,
+
+        "strategie":
+            "historique_causal_recent",
+
+        "variables_historique":
+            list(HISTORICAL_FEATURES),
+
+        "hyperparametres":
+            M2_PARAMS,
+
+        "performances_validation":
+            val_metrics,
+
+        "performances_test":
+            test_metrics,
     }
 
     model_path = (
@@ -1293,13 +1103,34 @@ def validate_m1_m2_artifacts():
 
         if len(
             artifact["features"]
-        ) != 19:
+        ) != 24:
 
             raise ValueError(
                 f"{name} doit contenir "
-                f"19 features, mais en contient "
+                f"24 features, mais en contient "
                 f"{len(artifact['features'])}"
             )
+
+
+    expected_historical = set(
+        HISTORICAL_FEATURES
+    )
+
+    actual_historical = set(
+        artifact.get(
+            "variables_historique",
+            []
+        )
+    )
+
+    if not expected_historical.issubset(
+        actual_historical
+    ):
+
+        raise ValueError(
+            f"{name} : variables historiques "
+            "V4 incomplètes."
+        )
 
     print()
     print("=" * 60)

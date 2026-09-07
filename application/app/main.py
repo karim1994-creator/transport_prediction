@@ -37,6 +37,9 @@ async def lifespan(app: FastAPI):
         loader
     )
 
+    from app.services.day_prediction_service import DayPredictionService
+    app.state.day_prediction_service = DayPredictionService(loader)
+
     # ========================================================
     # MONITORING DE DERIVE - PSI
     # ========================================================

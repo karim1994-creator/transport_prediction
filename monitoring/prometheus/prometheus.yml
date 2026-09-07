@@ -5,12 +5,8 @@ rule_files:
   - /etc/prometheus/alerts.yml
 
 scrape_configs:
-
   - job_name: "transport-prediction-api"
-
     metrics_path: /metrics
-
     static_configs:
-
       - targets:
           - api:8000

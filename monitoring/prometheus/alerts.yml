@@ -1,20 +1,129 @@
 groups:
 
-  - name: transport-prediction-ml
+  - name: transport-prediction-alerts
 
     rules:
 
-      - alert: MLModelDriftDetected
+      # ======================================================
+      # API DOWN
+      # ======================================================
 
-        expr: ml_drift_psi{model=~"M3|M4"} >= 0.20
+      - alert: APITransportPredictionDown
+
+        expr: up{job="transport-prediction-api"} == 0
+
+        for: 1m
+
+        labels:
+          severity: critical
+          service: transport-prediction
+
+        annotations:
+          summary: "API Transport Prediction indisponible"
+          description: "Prometheus ne peut plus joindre l'API transport-prediction."
+
+
+      # ======================================================
+      # ERREURS HTTP
+      # ======================================================
+
+      - alert: APIHighHttpErrorRate
+
+        expr: |
+          sum(
+            rate(
+              http_requests_total{
+                job="transport-prediction-api",
+                status!~"2.."
+              }[5m]
+            )
+          ) > 0.1
 
         for: 2m
 
         labels:
           severity: warning
+          service: transport-prediction
 
         annotations:
+          summary: "Taux d'erreurs HTTP élevé"
+          description: "Le taux d'erreurs HTTP de l'API dépasse 0.1 requête/s depuis 2 minutes."
 
-          summary: "Dérive détectée sur le modèle {{ $labels.model }}"
 
-          description: "Le PSI du modèle {{ $labels.model }} dépasse le seuil de 0.20."
+      # ======================================================
+      # LATENCE P95
+      # ======================================================
+
+      - alert: APIHighLatencyP95
+
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (
+              rate(
+                http_request_duration_seconds_bucket{
+                  job="transport-prediction-api"
+                }[5m]
+              )
+            )
+          ) > 2
+
+        for: 2m
+
+        labels:
+          severity: warning
+          service: transport-prediction
+
+        annotations:
+          summary: "Latence API élevée"
+          description: "La latence P95 de l'API dépasse 2 secondes depuis 2 minutes."
+
+
+      # ======================================================
+      # PSI PAR MODELE
+      # ======================================================
+
+      - alert: MLModelDriftDetected
+
+        expr: |
+          ml_drift_psi{
+            model=~"M1|M2|M3|M4"
+          } >= 0.20
+          and
+          ml_drift_samples{
+            model=~"M1|M2|M3|M4"
+          } > 0
+
+        for: 1m
+
+        labels:
+          severity: warning
+          service: transport-prediction
+
+        annotations:
+          summary: "Dérive ML détectée sur {{ $labels.model }}"
+
+          description: "Le PSI du modèle {{ $labels.model }} est supérieur ou égal à 0.20."
+
+
+      # ======================================================
+      # ALERTE DRIFT ACTIVE
+      # ======================================================
+
+      - alert: MLDriftAlertActive
+
+        expr: |
+          ml_drift_alert{
+            model=~"M1|M2|M3|M4"
+          } == 1
+
+        for: 1m
+
+        labels:
+          severity: warning
+          service: transport-prediction
+
+        annotations:
+          summary: "Alerte de dérive active sur {{ $labels.model }}"
+
+          description: "Le monitoring PSI signale une dérive pour le modèle {{ $labels.model }}."

@@ -62,9 +62,7 @@ MLFLOW_DB = (
     / "mlflow.db"
 )
 
-mlflow.set_tracking_uri(
-    f"sqlite:///{MLFLOW_DB}"
-)
+mlflow.set_tracking_uri("http://localhost:5000")
 
 
 # ============================================================
