@@ -36,7 +36,7 @@ def test_predict_m3():
             json=payload
         )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
 
     data = response.json()
 
@@ -83,7 +83,7 @@ def test_predict_m4():
             json=payload
         )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
 
     data = response.json()
 
@@ -130,7 +130,7 @@ def test_m3_profile_structure():
             json=payload
         )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
 
     data = response.json()
 
@@ -176,7 +176,7 @@ def test_m4_profile_structure():
             json=payload
         )
 
-    assert response.status_code == 200
+    assert response.status_code == 200, response.text
 
     data = response.json()
 
