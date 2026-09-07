@@ -8,14 +8,10 @@
 #   - évaluation M1 / M2 / M3 / M4
 #
 # CD :
-#   - construction de l'image Docker
-#   - démarrage du conteneur
+#   - construction image Docker
+#   - démarrage FastAPI
 #   - test /health
 #   - test /models
-#
-# IMPORTANT :
-# Les tests CI ne dépendent pas d'une base PostgreSQL réelle.
-# La persistance des prédictions est neutralisée pendant pytest.
 #
 # ============================================================
 
@@ -55,12 +51,7 @@ jobs:
 
 
     # --------------------------------------------------------
-    # VARIABLES DE TEST
-    # --------------------------------------------------------
-    #
-    # Elles permettent à l'application de s'initialiser sans
-    # utiliser les vraies informations PostgreSQL.
-    #
+    # VARIABLES NECESSAIRES AU CHARGEMENT DE L'APPLICATION
     # --------------------------------------------------------
 
     env:
@@ -117,7 +108,7 @@ jobs:
 
 
       # ======================================================
-      # 4. DEPENDANCES
+      # 4. INSTALLATION DEPENDANCES
       # ======================================================
 
       - name: Installer les dépendances
@@ -141,7 +132,7 @@ jobs:
 
 
       # ======================================================
-      # 6. VERIFICATION DES ARTEFACTS
+      # 6. VERIFICATION DES MODELES
       # ======================================================
 
       - name: Vérifier les modèles M1-M4
@@ -156,6 +147,7 @@ jobs:
 
           echo "=============================================="
 
+
           test -f models_a53/M1_hgb_historique_causal.joblib
 
           test -f models_a53/M2_hgb_historique_causal.joblib
@@ -163,6 +155,7 @@ jobs:
           test -f models_a53/M3_baseline_historique.joblib
 
           test -f models_a53/M4_baseline_historique.joblib
+
 
           echo ""
 
@@ -180,17 +173,17 @@ jobs:
 
 
       # ======================================================
-      # 7. PREPARATION DES TESTS CI
+      # 7. PREPARER PYTEST
       # ======================================================
       #
-      # Les endpoints M3/M4 sauvegardent normalement les
-      # prédictions dans PostgreSQL.
+      # On neutralise uniquement la sauvegarde de l'historique
+      # M3/M4 pendant les tests.
       #
-      # Pour la CI, on teste la logique de prédiction sans
-      # dépendre de la base métier réelle.
+      # IMPORTANT :
+      # PredictionHistory possède save_profile_prediction.
       #
-      # Cette modification existe uniquement dans le runner
-      # GitHub Actions et n'est jamais envoyée au dépôt.
+      # On ne référence PAS save_daily_prediction car cette
+      # méthode n'existe pas dans ton code.
       #
       # ======================================================
 
@@ -211,12 +204,11 @@ jobs:
               from app.services.prediction_history import PredictionHistory
 
 
-              def fake_save_profile_prediction(self, *args, **kwargs):
-
-                  return None
-
-
-              def fake_save_daily_prediction(self, *args, **kwargs):
+              def fake_save_profile_prediction(
+                  self,
+                  *args,
+                  **kwargs
+              ):
 
                   return None
 
@@ -231,21 +223,10 @@ jobs:
 
               )
 
-
-              monkeypatch.setattr(
-
-                  PredictionHistory,
-
-                  "save_daily_prediction",
-
-                  fake_save_daily_prediction
-
-              )
-
           PYTEST
 
 
-          echo "Tests CI préparés."
+          echo "Configuration pytest CI créée."
 
 
       # ======================================================
@@ -262,11 +243,12 @@ jobs:
 
           echo "=============================================="
 
+
           pytest -v tests
 
 
       # ======================================================
-      # 9. EVALUATION DES MODELES
+      # 9. EVALUATION MODELES
       # ======================================================
 
       - name: Évaluer les modèles M1-M4
@@ -279,11 +261,12 @@ jobs:
 
           echo "=============================================="
 
+
           python evaluate_models_ci.py
 
 
       # ======================================================
-      # 10. ARCHIVAGE DES RAPPORTS
+      # 10. ARCHIVAGE RAPPORTS
       # ======================================================
 
       - name: Publier les rapports CI
@@ -329,7 +312,7 @@ jobs:
 
 
       # ======================================================
-      # 2. VERIFICATION DOCKER
+      # 2. VERIFIER DOCKER
       # ======================================================
 
       - name: Vérifier Docker
@@ -340,7 +323,7 @@ jobs:
 
 
       # ======================================================
-      # 3. CONSTRUCTION IMAGE
+      # 3. CONSTRUIRE IMAGE
       # ======================================================
 
       - name: Construire l'image Docker
@@ -352,6 +335,7 @@ jobs:
           echo "CONSTRUCTION IMAGE DOCKER"
 
           echo "=============================================="
+
 
           docker build \
             -t transport-prediction-api:ci \
@@ -366,14 +350,17 @@ jobs:
 
         run: |
 
-          docker images
-
           docker image inspect \
             transport-prediction-api:ci
 
 
+          echo ""
+
+          echo "Image Docker valide."
+
+
       # ======================================================
-      # 5. DEMARRER LE CONTENEUR API
+      # 5. DEMARRER API
       # ======================================================
 
       - name: Démarrer le conteneur API
@@ -393,7 +380,7 @@ jobs:
 
 
       # ======================================================
-      # 6. ATTENDRE LE DEMARRAGE API
+      # 6. ATTENDRE API
       # ======================================================
 
       - name: Attendre le démarrage de FastAPI
@@ -402,7 +389,11 @@ jobs:
 
         run: |
 
-          echo "Attente du démarrage de l'API..."
+          echo "=============================================="
+
+          echo "ATTENTE DEMARRAGE FASTAPI"
+
+          echo "=============================================="
 
 
           for i in {1..30}
@@ -434,7 +425,7 @@ jobs:
 
           echo ""
 
-          echo "ERREUR : l'API n'a pas démarré."
+          echo "ERREUR : API non démarrée."
 
           echo ""
 
@@ -470,7 +461,6 @@ jobs:
 
 
           echo "$response" | grep '"status":"ok"'
-
 
           echo "$response" | grep '"models_loaded":4'
 
@@ -523,7 +513,7 @@ jobs:
 
 
       # ======================================================
-      # 9. LOGS EN CAS D'ERREUR
+      # 9. LOGS SI ERREUR
       # ======================================================
 
       - name: Afficher les logs Docker
@@ -534,7 +524,7 @@ jobs:
 
           echo "=============================================="
 
-          echo "LOGS FASTAPI"
+          echo "LOGS DU CONTENEUR API"
 
           echo "=============================================="
 
@@ -543,7 +533,7 @@ jobs:
 
 
       # ======================================================
-      # 10. ARRET CONTENEUR
+      # 10. ARRETER CONTENEUR
       # ======================================================
 
       - name: Arrêter le conteneur
@@ -558,7 +548,7 @@ jobs:
 
 
       # ======================================================
-      # 11. FIN CD
+      # 11. VALIDATION FINALE
       # ======================================================
 
       - name: Validation Docker terminée
@@ -571,23 +561,31 @@ jobs:
 
           echo "=============================================="
 
-          echo "       CD DOCKER VALIDEE"
+          echo "          CI/CD VALIDEE AVEC SUCCES"
 
           echo "=============================================="
 
           echo ""
 
-          echo "Image construite : transport-prediction-api:ci"
+          echo "CI : OK"
 
-          echo "FastAPI démarrée : OK"
+          echo "Pytest : OK"
 
-          echo "M1 chargé : OK"
+          echo "M1 : OK"
 
-          echo "M2 chargé : OK"
+          echo "M2 : OK"
 
-          echo "M3 chargé : OK"
+          echo "M3 : OK"
 
-          echo "M4 chargé : OK"
+          echo "M4 : OK"
+
+          echo "Evaluation modèles : OK"
+
+          echo ""
+
+          echo "Docker build : OK"
+
+          echo "FastAPI : OK"
 
           echo "/health : OK"
 
@@ -597,6 +595,7 @@ jobs:
 
           echo "=============================================="
 
-          echo "       PIPELINE CI/CD : SUCCES"
+          echo "              PIPELINE : VERT"
 
           echo "=============================================="
+
