@@ -1,3 +1,4 @@
+```yaml
 # ============================================================
 # CI/CD — TRANSPORT PREDICTION
 #
@@ -27,13 +28,11 @@ name: CI-CD Transport Prediction
 on:
 
   push:
-
     branches:
       - main
       - master
 
   pull_request:
-
     branches:
       - main
       - master
@@ -51,11 +50,40 @@ jobs:
 
     runs-on: ubuntu-latest
 
+
+    # --------------------------------------------------------
+    # POSTGRESQL DE TEST
+    # --------------------------------------------------------
+
+    services:
+
+      postgres:
+
+        image: postgres:16
+
+        env:
+
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: test_db
+
+        ports:
+
+          - 5432:5432
+
+        options: >-
+
+          --health-cmd="pg_isready -U test_user -d test_db"
+
+          --health-interval=10s
+
+          --health-timeout=5s
+
+          --health-retries=5
+
+
     # --------------------------------------------------------
     # VARIABLES DE TEST
-    #
-    # Ces valeurs sont uniquement utilisées par GitHub Actions.
-    # Elles ne correspondent PAS à la vraie base PostgreSQL.
     # --------------------------------------------------------
 
     env:
@@ -66,20 +94,22 @@ jobs:
       DB_USER: test_user
       DB_PASSWORD: test_password
 
+
     steps:
 
-      # ------------------------------------------------------
+
+      # ======================================================
       # 1. CHECKOUT
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Checkout du dépôt
 
         uses: actions/checkout@v4
 
 
-      # ------------------------------------------------------
+      # ======================================================
       # 2. PYTHON
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Installer Python
 
@@ -90,9 +120,9 @@ jobs:
           python-version: "3.11"
 
 
-      # ------------------------------------------------------
+      # ======================================================
       # 3. CACHE PIP
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Configurer le cache pip
 
@@ -109,9 +139,9 @@ jobs:
             ${{ runner.os }}-pip-
 
 
-      # ------------------------------------------------------
+      # ======================================================
       # 4. DEPENDANCES
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Installer les dépendances
 
@@ -122,9 +152,9 @@ jobs:
           pip install -r requirements-ci.txt
 
 
-      # ------------------------------------------------------
+      # ======================================================
       # 5. PYTHONPATH
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Configurer PYTHONPATH
 
@@ -133,9 +163,30 @@ jobs:
           echo "PYTHONPATH=$GITHUB_WORKSPACE/application" >> $GITHUB_ENV
 
 
-      # ------------------------------------------------------
-      # 6. VERIFICATION DES ARTEFACTS
-      # ------------------------------------------------------
+      # ======================================================
+      # 6. VERIFIER POSTGRESQL
+      # ======================================================
+
+      - name: Vérifier PostgreSQL
+
+        shell: bash
+
+        run: |
+
+          echo "Vérification de PostgreSQL..."
+
+          pg_isready \
+            -h localhost \
+            -p 5432 \
+            -U test_user \
+            -d test_db
+
+          echo "PostgreSQL est disponible."
+
+
+      # ======================================================
+      # 7. VERIFICATION DES ARTEFACTS
+      # ======================================================
 
       - name: Vérifier les modèles M1-M4
 
@@ -158,9 +209,73 @@ jobs:
           echo "Les 4 modèles sont présents."
 
 
-      # ------------------------------------------------------
-      # 7. TESTS PYTEST
-      # ------------------------------------------------------
+      # ======================================================
+      # 8. DESACTIVER UNIQUEMENT LA PERSISTANCE DB DES TESTS
+      # ======================================================
+      #
+      # Les tests CI vérifient les prédictions M1-M4.
+      #
+      # Les endpoints M3/M4 sauvegardent ensuite la prédiction
+      # dans PostgreSQL.
+      #
+      # Le schéma métier réel n'est pas nécessaire pour tester
+      # le calcul de la prédiction.
+      #
+      # On remplace donc temporairement la méthode de sauvegarde
+      # par une fonction vide pendant pytest.
+      #
+      # Aucun fichier du dépôt n'est modifié définitivement.
+      #
+
+      - name: Préparer les tests CI
+
+        shell: bash
+
+        run: |
+
+          cat > tests/conftest.py <<'PYTEST'
+
+          import pytest
+
+
+          @pytest.fixture(autouse=True)
+          def disable_prediction_history(monkeypatch):
+
+              from app.services.prediction_history import PredictionHistory
+
+
+              def fake_save_profile_prediction(self, *args, **kwargs):
+
+                  return None
+
+
+              def fake_save_daily_prediction(self, *args, **kwargs):
+
+                  return None
+
+
+              monkeypatch.setattr(
+                  PredictionHistory,
+                  "save_profile_prediction",
+                  fake_save_profile_prediction
+              )
+
+
+              monkeypatch.setattr(
+                  PredictionHistory,
+                  "save_daily_prediction",
+                  fake_save_daily_prediction
+              )
+
+          PYTEST
+
+
+          echo "Configuration CI des tests créée."
+
+
+      # ======================================================
+      # 9. TESTS PYTEST
+      # ======================================================
 
       - name: Exécuter les tests pytest
 
@@ -169,9 +284,9 @@ jobs:
           pytest -v tests
 
 
-      # ------------------------------------------------------
-      # 8. EVALUATION MODELES
-      # ------------------------------------------------------
+      # ======================================================
+      # 10. EVALUATION MODELES
+      # ======================================================
 
       - name: Évaluer les modèles M1-M4
 
@@ -180,9 +295,9 @@ jobs:
           python evaluate_models_ci.py
 
 
-      # ------------------------------------------------------
-      # 9. ARCHIVAGE DES RAPPORTS
-      # ------------------------------------------------------
+      # ======================================================
+      # 11. ARCHIVAGE DES RAPPORTS
+      # ======================================================
 
       - name: Publier les rapports CI
 
@@ -211,33 +326,22 @@ jobs:
 
       - quality-check
 
-    # --------------------------------------------------------
-    # VARIABLES DE TEST POUR LE CONTENEUR
-    # --------------------------------------------------------
-
-    env:
-
-      DB_HOST: localhost
-      DB_PORT: "5432"
-      DB_NAME: test_db
-      DB_USER: test_user
-      DB_PASSWORD: test_password
 
     steps:
 
 
-      # ------------------------------------------------------
+      # ======================================================
       # 1. CHECKOUT
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Checkout du dépôt
 
         uses: actions/checkout@v4
 
 
-      # ------------------------------------------------------
+      # ======================================================
       # 2. VERIFICATION DOCKER
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Vérifier Docker
 
@@ -246,9 +350,9 @@ jobs:
           docker --version
 
 
-      # ------------------------------------------------------
+      # ======================================================
       # 3. CONSTRUCTION IMAGE
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Construire l'image Docker
 
@@ -259,9 +363,9 @@ jobs:
             .
 
 
-      # ------------------------------------------------------
+      # ======================================================
       # 4. VERIFIER IMAGE
-      # ------------------------------------------------------
+      # ======================================================
 
       - name: Vérifier l'image
 
@@ -273,29 +377,101 @@ jobs:
             transport-prediction-api:ci
 
 
-      # ------------------------------------------------------
-      # 5. DEMARRER LE CONTENEUR
-      # ------------------------------------------------------
+      # ======================================================
+      # 5. CREER LE RESEAU DOCKER
+      # ======================================================
 
-      - name: Démarrer le conteneur
+      - name: Créer le réseau Docker CI
+
+        run: |
+
+          docker network create transport-ci
+
+
+      # ======================================================
+      # 6. DEMARRER POSTGRESQL
+      # ======================================================
+
+      - name: Démarrer PostgreSQL
+
+        run: |
+
+          docker run \
+            -d \
+            --name transport-prediction-postgres \
+            --network transport-ci \
+            -e POSTGRES_USER=test_user \
+            -e POSTGRES_PASSWORD=test_password \
+            -e POSTGRES_DB=test_db \
+            postgres:16
+
+
+      # ======================================================
+      # 7. ATTENDRE POSTGRESQL
+      # ======================================================
+
+      - name: Attendre PostgreSQL
+
+        shell: bash
+
+        run: |
+
+          echo "Attente de PostgreSQL..."
+
+          for i in {1..30}
+          do
+
+            if docker exec \
+              transport-prediction-postgres \
+              pg_isready \
+              -U test_user \
+              -d test_db
+            then
+
+              echo "PostgreSQL démarré."
+
+              exit 0
+
+            fi
+
+            echo "Tentative PostgreSQL $i/30..."
+
+            sleep 2
+
+          done
+
+
+          echo "PostgreSQL n'a pas démarré."
+
+          docker logs transport-prediction-postgres
+
+          exit 1
+
+
+      # ======================================================
+      # 8. DEMARRER LE CONTENEUR API
+      # ======================================================
+
+      - name: Démarrer le conteneur API
 
         run: |
 
           docker run \
             -d \
             --name transport-prediction-api \
+            --network transport-ci \
             -p 8000:8000 \
-            -e DB_HOST="$DB_HOST" \
-            -e DB_PORT="$DB_PORT" \
-            -e DB_NAME="$DB_NAME" \
-            -e DB_USER="$DB_USER" \
-            -e DB_PASSWORD="$DB_PASSWORD" \
+            -e DB_HOST=transport-prediction-postgres \
+            -e DB_PORT=5432 \
+            -e DB_NAME=test_db \
+            -e DB_USER=test_user \
+            -e DB_PASSWORD=test_password \
             transport-prediction-api:ci
 
 
-      # ------------------------------------------------------
-      # 6. ATTENDRE LE DEMARRAGE API
-      # ------------------------------------------------------
+      # ======================================================
+      # 9. ATTENDRE LE DEMARRAGE API
+      # ======================================================
 
       - name: Attendre le démarrage de FastAPI
 
@@ -328,6 +504,7 @@ jobs:
 
           done
 
+
           echo "L'API n'a pas démarré."
 
           docker logs transport-prediction-api
@@ -335,9 +512,9 @@ jobs:
           exit 1
 
 
-      # ------------------------------------------------------
-      # 7. TEST HEALTH
-      # ------------------------------------------------------
+      # ======================================================
+      # 10. TEST HEALTH
+      # ======================================================
 
       - name: Tester /health
 
@@ -357,9 +534,9 @@ jobs:
           echo "$response" | grep '"models_loaded":4'
 
 
-      # ------------------------------------------------------
-      # 8. TEST MODELS
-      # ------------------------------------------------------
+      # ======================================================
+      # 11. TEST MODELS
+      # ======================================================
 
       - name: Tester /models
 
@@ -382,12 +559,12 @@ jobs:
 
           echo "$response" | grep '"M4"'
 
-          echo "$response" | grep '"loaded":true"
+          echo "$response" | grep '"loaded":true"'
 
 
-      # ------------------------------------------------------
-      # 9. TEST PREDICTION M3
-      # ------------------------------------------------------
+      # ======================================================
+      # 12. TEST PREDICTION M3
+      # ======================================================
 
       - name: Tester /predict/m3
 
@@ -404,7 +581,7 @@ jobs:
               -H "Content-Type: application/json" \
               -d '{
                 "profile": {
-                  "code_arret": "810_801_594 ",
+                  "code_arret": "810_801_594",
                   "id_zdc": "71590",
                   "cat_jour": "JOHV"
                 }
@@ -422,9 +599,9 @@ jobs:
           echo "$response" | grep '"total_percent":'
 
 
-      # ------------------------------------------------------
-      # 10. TEST PREDICTION M4
-      # ------------------------------------------------------
+      # ======================================================
+      # 13. TEST PREDICTION M4
+      # ======================================================
 
       - name: Tester /predict/m4
 
@@ -459,9 +636,9 @@ jobs:
           echo "$response" | grep '"total_percent":100'
 
 
-      # ------------------------------------------------------
-      # 11. LOGS EN CAS D'ERREUR
-      # ------------------------------------------------------
+      # ======================================================
+      # 14. LOGS EN CAS D'ERREUR
+      # ======================================================
 
       - name: Afficher les logs Docker
 
@@ -469,14 +646,22 @@ jobs:
 
         run: |
 
-          docker logs transport-prediction-api
+          echo "================ API LOGS ================"
+
+          docker logs transport-prediction-api || true
+
+          echo ""
+
+          echo "============= POSTGRES LOGS =============="
+
+          docker logs transport-prediction-postgres || true
 
 
-      # ------------------------------------------------------
-      # 12. ARRET CONTENEUR
-      # ------------------------------------------------------
+      # ======================================================
+      # 15. ARRET CONTENEURS
+      # ======================================================
 
-      - name: Arrêter le conteneur
+      - name: Arrêter les conteneurs
 
         if: always()
 
@@ -486,10 +671,16 @@ jobs:
 
           docker rm transport-prediction-api || true
 
+          docker stop transport-prediction-postgres || true
 
-      # ------------------------------------------------------
-      # 13. FIN CD
-      # ------------------------------------------------------
+          docker rm transport-prediction-postgres || true
+
+          docker network rm transport-ci || true
+
+
+      # ======================================================
+      # 16. FIN CD
+      # ======================================================
 
       - name: Validation Docker terminée
 
@@ -502,6 +693,8 @@ jobs:
           echo "CD DOCKER VALIDEE"
 
           echo "Image construite : transport-prediction-api:ci"
+
+          echo "PostgreSQL démarré"
 
           echo "FastAPI démarrée"
 
@@ -516,3 +709,4 @@ jobs:
           echo "/predict/m4 : OK"
 
           echo "=============================================="
+```
